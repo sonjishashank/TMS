@@ -1,11 +1,10 @@
 from flask import request, jsonify
 from app import app, db
-from flask_cors import CORS
-from flask import Flask
 from app.models import Customers, Orders, Payments, Workers, OrderItems
 
-app = Flask(__name__)
-CORS(app)
+# Remove these lines because `app` and `CORS` are already set up in `__init__.py`
+# app = Flask(__name__)
+# CORS(app)
 
 # Customers Endpoints
 @app.route('/customers', methods=['POST'])
@@ -51,10 +50,16 @@ def delete_customer(id):
 @app.route('/orders', methods=['POST'])
 def create_order():
     data = request.get_json()
+    customer = Customers.query.get(data['customer_id'])
+    
+    if not customer:
+        return jsonify({"message": "Customer not found"}), 404
+
     new_order = Orders(customer_id=data['customer_id'], order_date=data['order_date'], total=data['total'])
     db.session.add(new_order)
     db.session.commit()
     return jsonify({"message": "Order created!"})
+
 
 @app.route('/orders', methods=['GET'])
 def get_orders():
@@ -208,4 +213,3 @@ def delete_order_item(id):
     db.session.delete(order_item)
     db.session.commit()
     return jsonify({"message": "Order item deleted!"})
-
